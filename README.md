@@ -1,0 +1,2 @@
+# Seven-Segment-Display-Control-on-FPGA-Boards
+This topic introduces the control of seven-segment displays commonly found on educational FPGA boards. The student should explain segment encoding, digit selection, and multiplexing when several digits share segment lines. The presentation should include a simple example such as displaying a hexadecimal counter. The expected outcome is that viewers understand how FPGA logic interacts with simple output devices and why time-multiplexing reduces the number of required I/O pins.
