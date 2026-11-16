@@ -1,0 +1,3 @@
+/tb_disp_mux/an
+/tb_disp_mux/seg
+/tb_disp_mux/dut/digit_sel
