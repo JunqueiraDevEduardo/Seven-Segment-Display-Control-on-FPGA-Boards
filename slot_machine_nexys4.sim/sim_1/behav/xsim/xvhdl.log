@@ -1,0 +1,6 @@
+INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/slot_machine_fsm.vhd" into library xil_defaultlib
+INFO: [VRFC 10-3107] analyzing entity 'slot_machine_fsm'
+INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd" into library xil_defaultlib
+INFO: [VRFC 10-3107] analyzing entity 'top'
+INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/tb_adaptive_slot_machine.vhd" into library xil_defaultlib
+INFO: [VRFC 10-3107] analyzing entity 'tb_adaptive_slot_machine'

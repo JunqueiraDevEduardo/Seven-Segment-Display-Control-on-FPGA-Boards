@@ -1,0 +1,12 @@
+0.7
+2020.2
+May 22 2025
+00:13:55
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/adaptive_threshold_ctrl.vhd,1795207927,vhdl,C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd,,,adaptive_threshold_ctrl,,,,,,,,
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/debounce.vhd,1795208006,vhdl,C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd,,,debounce,,,,,,,,
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/disp_mux.vhd,1795207976,vhdl,C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd,,,disp_mux,,,,,,,,
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/hex_to_7seg.vhd,1795207991,vhdl,C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/disp_mux.vhd,,,hex_to_7seg,,,,,,,,
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/lfsr_prng.vhd,1795211180,vhdl,C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd,,,lfsr_prng,,,,,,,,
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/slot_machine_fsm.vhd,1795212324,vhdl,C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd,,,slot_machine_fsm,,,,,,,,
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/tb_adaptive_slot_machine.vhd,1795208016,vhdl,,,,tb_adaptive_slot_machine,,,,,,,,
+C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd,1795207906,vhdl,C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/tb_adaptive_slot_machine.vhd,,,top,,,,,,,,

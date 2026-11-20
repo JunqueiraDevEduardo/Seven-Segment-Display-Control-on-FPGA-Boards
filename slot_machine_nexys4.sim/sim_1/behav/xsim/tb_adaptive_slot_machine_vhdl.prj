@@ -1,0 +1,12 @@
+# compile vhdl design source files
+vhdl xil_defaultlib  \
+"../../../../slot_machine_nexys4.srcs/sources_1/imports/Desktop/debounce.vhd" \
+"../../../../slot_machine_nexys4.srcs/sources_1/imports/Desktop/hex_to_7seg.vhd" \
+"../../../../slot_machine_nexys4.srcs/sources_1/imports/Desktop/disp_mux.vhd" \
+"../../../../slot_machine_nexys4.srcs/sources_1/imports/Desktop/lfsr_prng.vhd" \
+"../../../../slot_machine_nexys4.srcs/sources_1/imports/Desktop/slot_machine_fsm.vhd" \
+"../../../../slot_machine_nexys4.srcs/sources_1/imports/Desktop/top.vhd" \
+"../../../../slot_machine_nexys4.srcs/sources_1/imports/Desktop/tb_adaptive_slot_machine.vhd" \
+
+# Do not sort compile order
+nosort

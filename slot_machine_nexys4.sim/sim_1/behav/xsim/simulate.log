@@ -1,0 +1,7 @@
+Time resolution is 1 ps
+Note: ================ INICIO DA SIMULACAO ================
+Time: 0 ps  Iteration: 0  Process: /tb_adaptive_slot_machine/line__62  File: C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/tb_adaptive_slot_machine.vhd
+Note: SUCESSO: Limiar inicial verificado = 50 (0x32).
+Time: 700 ns  Iteration: 0  Process: /tb_adaptive_slot_machine/line__62  File: C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/tb_adaptive_slot_machine.vhd
+Note: Executando Spin 1...
+Time: 700 ns  Iteration: 0  Process: /tb_adaptive_slot_machine/line__62  File: C:/Users/student/slot_machine_nexys4/slot_machine_nexys4.srcs/sources_1/imports/Desktop/tb_adaptive_slot_machine.vhd
