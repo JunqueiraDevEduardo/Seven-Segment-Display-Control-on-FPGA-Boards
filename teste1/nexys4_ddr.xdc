@@ -1,18 +1,18 @@
 ## ============================================================================
 ## nexys4_ddr.xdc
 ## Ficheiro de Restrições (XDC) para a Placa Digilent Nexys-4 DDR
-## Projeto: Slot Machine Adaptativa com Dynamic Threshold Control em VHDL
+## Projeto: Slot Machine 6 Carretéis (3 + 3) com Créditos e Luzes RGB
 ## ============================================================================
 
 ## Relógio de Sistema 100 MHz
 set_property -dict { PACKAGE_PIN E3  IOSTANDARD LVCMOS33 } [get_ports { clk }]
 create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { clk }]
 
-## Botões (Push-buttons com lógica ativa em alta)
+## Botões (Push-buttons)
 set_property -dict { PACKAGE_PIN N17 IOSTANDARD LVCMOS33 } [get_ports { btnc }] ; # SPIN (Botão Central)
 set_property -dict { PACKAGE_PIN M18 IOSTANDARD LVCMOS33 } [get_ports { btnu }] ; # RESET (Botão Superior)
 
-## Switches (sw[7..0]: Limiar Manual inicial | sw[15]: Modo manual/adaptativo)
+## Switches
 set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { sw[0] }]
 set_property -dict { PACKAGE_PIN L16 IOSTANDARD LVCMOS33 } [get_ports { sw[1] }]
 set_property -dict { PACKAGE_PIN M13 IOSTANDARD LVCMOS33 } [get_ports { sw[2] }]
@@ -30,7 +30,7 @@ set_property -dict { PACKAGE_PIN U12 IOSTANDARD LVCMOS33 } [get_ports { sw[13] }
 set_property -dict { PACKAGE_PIN U11 IOSTANDARD LVCMOS33 } [get_ports { sw[14] }]
 set_property -dict { PACKAGE_PIN V10 IOSTANDARD LVCMOS33 } [get_ports { sw[15] }]
 
-## LEDs (leds_threshold[7:0] nos LEDs 7..0 | led_win no LED 15)
+## 16 LEDs Standard da Nexys-4 DDR
 set_property -dict { PACKAGE_PIN H17 IOSTANDARD LVCMOS33 } [get_ports { led[0] }]
 set_property -dict { PACKAGE_PIN K15 IOSTANDARD LVCMOS33 } [get_ports { led[1] }]
 set_property -dict { PACKAGE_PIN J13 IOSTANDARD LVCMOS33 } [get_ports { led[2] }]
@@ -46,7 +46,15 @@ set_property -dict { PACKAGE_PIN T16 IOSTANDARD LVCMOS33 } [get_ports { led[11] 
 set_property -dict { PACKAGE_PIN V15 IOSTANDARD LVCMOS33 } [get_ports { led[12] }]
 set_property -dict { PACKAGE_PIN V14 IOSTANDARD LVCMOS33 } [get_ports { led[13] }]
 set_property -dict { PACKAGE_PIN V12 IOSTANDARD LVCMOS33 } [get_ports { led[14] }]
-set_property -dict { PACKAGE_PIN V11 IOSTANDARD LVCMOS33 } [get_ports { led[15] }] ; # LED de Vitória (led_win)
+set_property -dict { PACKAGE_PIN V11 IOSTANDARD LVCMOS33 } [get_ports { led[15] }]
+
+## LEDs RGB (LD16 e LD17)
+set_property -dict { PACKAGE_PIN N15 IOSTANDARD LVCMOS33 } [get_ports { led16_r }] ; # LD16 R
+set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { led16_g }] ; # LD16 G
+set_property -dict { PACKAGE_PIN R12 IOSTANDARD LVCMOS33 } [get_ports { led16_b }] ; # LD16 B
+set_property -dict { PACKAGE_PIN N16 IOSTANDARD LVCMOS33 } [get_ports { led17_r }] ; # LD17 R
+set_property -dict { PACKAGE_PIN R11 IOSTANDARD LVCMOS33 } [get_ports { led17_g }] ; # LD17 G
+set_property -dict { PACKAGE_PIN G14 IOSTANDARD LVCMOS33 } [get_ports { led17_b }] ; # LD17 B
 
 ## Cátodos dos 7 Segmentos (CA..CG, ativo em baixo '0')
 set_property -dict { PACKAGE_PIN T10 IOSTANDARD LVCMOS33 } [get_ports { seg[6] }] ; # CA
@@ -59,11 +67,11 @@ set_property -dict { PACKAGE_PIN L18 IOSTANDARD LVCMOS33 } [get_ports { seg[0] }
 set_property -dict { PACKAGE_PIN H15 IOSTANDARD LVCMOS33 } [get_ports { dp }]     ; # Ponto Decimal (DP)
 
 ## Ânodos dos 8 Dígitos (AN0..AN7, ativo em baixo '0')
-set_property -dict { PACKAGE_PIN J17 IOSTANDARD LVCMOS33 } [get_ports { an[0] }] ; # Dígito 0 (Carretel 1)
-set_property -dict { PACKAGE_PIN J18 IOSTANDARD LVCMOS33 } [get_ports { an[1] }] ; # Dígito 1 (Carretel 2)
-set_property -dict { PACKAGE_PIN T9  IOSTANDARD LVCMOS33 } [get_ports { an[2] }] ; # Dígito 2 (Carretel 3)
-set_property -dict { PACKAGE_PIN J14 IOSTANDARD LVCMOS33 } [get_ports { an[3] }] ; # Dígito 3 (Vitórias)
-set_property -dict { PACKAGE_PIN P14 IOSTANDARD LVCMOS33 } [get_ports { an[4] }] ; # Dígito 4 (Créditos Unidades)
-set_property -dict { PACKAGE_PIN T14 IOSTANDARD LVCMOS33 } [get_ports { an[5] }] ; # Dígito 5 (Créditos Dezenas)
-set_property -dict { PACKAGE_PIN K2  IOSTANDARD LVCMOS33 } [get_ports { an[6] }] ; # Dígito 6 (Limiar Unidades)
-set_property -dict { PACKAGE_PIN U13 IOSTANDARD LVCMOS33 } [get_ports { an[7] }] ; # Dígito 7 (Limiar Dezenas)
+set_property -dict { PACKAGE_PIN J17 IOSTANDARD LVCMOS33 } [get_ports { an[0] }] ; # Dígito 0 (Créditos Unidades)
+set_property -dict { PACKAGE_PIN J18 IOSTANDARD LVCMOS33 } [get_ports { an[1] }] ; # Dígito 1 (Créditos Dezenas)
+set_property -dict { PACKAGE_PIN T9  IOSTANDARD LVCMOS33 } [get_ports { an[2] }] ; # Dígito 2 (Carretel 6)
+set_property -dict { PACKAGE_PIN J14 IOSTANDARD LVCMOS33 } [get_ports { an[3] }] ; # Dígito 3 (Carretel 5)
+set_property -dict { PACKAGE_PIN P14 IOSTANDARD LVCMOS33 } [get_ports { an[4] }] ; # Dígito 4 (Carretel 4)
+set_property -dict { PACKAGE_PIN T14 IOSTANDARD LVCMOS33 } [get_ports { an[5] }] ; # Dígito 5 (Carretel 3)
+set_property -dict { PACKAGE_PIN K2  IOSTANDARD LVCMOS33 } [get_ports { an[6] }] ; # Dígito 6 (Carretel 2)
+set_property -dict { PACKAGE_PIN U13 IOSTANDARD LVCMOS33 } [get_ports { an[7] }] ; # Dígito 7 (Carretel 1)

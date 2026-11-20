@@ -3,12 +3,15 @@
 -- Módulo de Topo da Slot Machine na Nexys 4 DDR
 -- Configuração 3 + 3 + 2 (6 Carretéis de Slot Machine + 2 Dígitos de Créditos)
 --
--- Layout dos 8 Displays de 7 Segmentos:
---   [ AN7   AN6   AN5 ]   .   [ AN4   AN3   AN2 ]   .   [ AN1   AN0 ]
--- +---------------------+   +---------------------+   +---------------+
--- |   7     7     7   . |   |   7     7     7   . |   |   5     0     |
--- +---------------------+   +---------------------+   +---------------+
---     1º TRIO (3 REELS)         2º TRIO (3 REELS)       ÚLTIMOS 2 (CRÉDITOS)
+-- Regras de Jogo:
+--   - Perde nos dois trios: -5 Créditos
+--   - Ganha num trio: +10 Créditos
+--   - Ganha nos dois trios: +15 Créditos
+--
+-- Efeitos Visuais ao Ganhar:
+--   - Celebração de 5 SEGUNDOS
+--   - Todas as luzes da FPGA (LEDs 15..0) a piscar em uníssono (Blinker ~4 Hz)
+--   - LEDs RGB LD16 e LD17 a alternar entre cores vivas
 ----------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -19,14 +22,20 @@ entity top is
         SIM_SPEEDUP : boolean := false
     );
     port (
-        clk  : in  STD_LOGIC;                                  -- 100 MHz (E3)
-        btnc : in  STD_LOGIC;                                  -- SPIN (N17)
-        btnu : in  STD_LOGIC;                                  -- RESET (M18)
-        sw   : in  STD_LOGIC_VECTOR(15 downto 0);              -- Switches
-        led  : out STD_LOGIC_VECTOR(15 downto 0);              -- LEDs
-        an   : out STD_LOGIC_VECTOR(7 downto 0);               -- Ânodos (AN7..AN0)
-        seg  : out STD_LOGIC_VECTOR(6 downto 0);               -- Cátodos (CA..CG)
-        dp   : out STD_LOGIC                                   -- Ponto Decimal
+        clk     : in  STD_LOGIC;                               -- 100 MHz (E3)
+        btnc    : in  STD_LOGIC;                               -- SPIN (N17)
+        btnu    : in  STD_LOGIC;                               -- RESET (M18)
+        sw      : in  STD_LOGIC_VECTOR(15 downto 0);           -- Switches
+        led     : out STD_LOGIC_VECTOR(15 downto 0);           -- 16 LEDs da placa
+        an      : out STD_LOGIC_VECTOR(7 downto 0);            -- Ânodos (AN7..AN0)
+        seg     : out STD_LOGIC_VECTOR(6 downto 0);            -- Cátodos (CA..CG)
+        dp      : out STD_LOGIC;                               -- Ponto Decimal
+        led16_r : out STD_LOGIC;                               -- LD16 Vermelho (N15)
+        led16_g : out STD_LOGIC;                               -- LD16 Verde (M16)
+        led16_b : out STD_LOGIC;                               -- LD16 Azul (R12)
+        led17_r : out STD_LOGIC;                               -- LD17 Vermelho (N16)
+        led17_g : out STD_LOGIC;                               -- LD17 Verde (R11)
+        led17_b : out STD_LOGIC                                -- LD17 Azul (G14)
     );
 end top;
 
@@ -58,7 +67,8 @@ architecture Behavioral of top is
     signal led_win_s      : STD_LOGIC;
     signal spin_active_s  : STD_LOGIC;
     signal payout_act_s   : STD_LOGIC;
-    signal led_effects_s  : STD_LOGIC_VECTOR(6 downto 0);
+    signal blink_all_s    : STD_LOGIC;
+    signal chaser_leds_s  : STD_LOGIC_VECTOR(6 downto 0);
     signal fsm_code_s     : STD_LOGIC_VECTOR(2 downto 0);
 
     -- Sinais para o Multiplexador dos 8 Displays
@@ -130,7 +140,7 @@ begin
         );
 
     ----------------------------------------------------------------------------
-    -- 3. FSM da Slot Machine (6 Carretéis: 3 + 3 e Paragem Sequencial)
+    -- 3. FSM da Slot Machine (6 Carretéis com Celebração de 5 Segundos)
     ----------------------------------------------------------------------------
     u_fsm: entity work.slot_machine_fsm
         generic map (
@@ -157,7 +167,14 @@ begin
             led_win        => led_win_s,
             spin_active    => spin_active_s,
             payout_active  => payout_act_s,
-            led_effects    => led_effects_s,
+            blink_all_leds => blink_all_s,
+            chaser_leds    => chaser_leds_s,
+            rgb16_r        => led16_r,
+            rgb16_g        => led16_g,
+            rgb16_b        => led16_b,
+            rgb17_r        => led17_r,
+            rgb17_g        => led17_g,
+            rgb17_b        => led17_b,
             fsm_state_code => fsm_code_s
         );
 
@@ -179,7 +196,7 @@ begin
     digits_bus(7 downto 4)   <= get_bcd(credits_val, true);     -- AN1: Dezena dos Créditos
     digits_bus(3 downto 0)   <= get_bcd(credits_val, false);    -- AN0: Unidade dos Créditos
 
-    -- Pontos decimais delimitadores entre os trios e os créditos:
+    -- Pontos decimais delimitadores entre os blocos (ativo em baixo '0'):
     -- Ponto após AN5 e após AN2: "777. 777. 50"
     dp_bus <= "11011011";
 
@@ -196,15 +213,30 @@ begin
 
     ----------------------------------------------------------------------------
     -- 5. Mapeamento dos 16 LEDs da Nexys-4 DDR
+    --
+    -- Ao ganhar: TODAS AS 16 LUZES piscam em uníssono (Blinker) durante 5 segundos!
+    -- Durante o giro: LEDs 14..8 fazem a corrida de luzes (*chaser*).
+    -- Em repouso: LEDs 7..0 mostram a barra binária dos créditos.
     ----------------------------------------------------------------------------
-    -- LEDs 7..0: Representação binária dos créditos atuais
-    led(7 downto 0) <= std_logic_vector(to_unsigned(credits_val, 8));
-
-    -- LEDs 14..8: Animações visuais (Chaser em rotação / Festa no Jackpot)
-    led(14 downto 8) <= led_effects_s when (spin_active_s = '1' or payout_act_s = '1')
-                        else ("0000" & fsm_code_s);
-
-    -- LED 15: Indicador de Vitória (led_win)
-    led(15) <= led_win_s;
+    process(payout_act_s, led_win_s, blink_all_s, spin_active_s, chaser_leds_s, credits_val)
+    begin
+        if payout_act_s = '1' and led_win_s = '1' then
+            -- TODAS AS 16 LUZES A PISCAR EM UNÍSSONO!
+            if blink_all_s = '1' then
+                led <= (others => '1');
+            else
+                led <= (others => '0');
+            end if;
+        elsif spin_active_s = '1' then
+            -- Luzes a correr nos LEDs 14..8
+            led(15) <= '0';
+            led(14 downto 8) <= chaser_leds_s;
+            led(7 downto 0)  <= std_logic_vector(to_unsigned(credits_val, 8));
+        else
+            -- Repouso
+            led(15 downto 8) <= (others => '0');
+            led(7 downto 0)  <= std_logic_vector(to_unsigned(credits_val, 8));
+        end if;
+    end process;
 
 end Behavioral;
