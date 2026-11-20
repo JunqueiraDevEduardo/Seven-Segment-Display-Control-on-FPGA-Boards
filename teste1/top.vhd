@@ -1,13 +1,14 @@
 ----------------------------------------------------------------------------
 -- top.vhd
--- Módulo de Topo da Slot Machine Adaptativa na Nexys 4 DDR
--- Layout visual inspirado no projeto DE2 Board Slot Machine (CPE 100L)
--- e motor adaptativo do artigo IEEE 2025.
+-- Módulo de Topo da Slot Machine na Nexys 4 DDR
+-- Configuração 3 + 3 + 2 (6 Carretéis de Slot Machine + 2 Dígitos de Créditos)
 --
--- Disposição visual nos 8 Displays de 7 Segmentos:
---   [AN7 AN6] = CRÉDITOS DO JOGADOR (ex: 50, 49... exatamente como HEX7 HEX6)
---   [AN5 AN4] = LIMIAR DINÂMICO IA (ex: 50, 92... como HEX5 HEX4)
---   [AN3 AN2 AN1 AN0] = OS 4 CARRETÉIS DA SLOT MACHINE (ex: 7 7 7 7 como HEX3..HEX0)
+-- Layout dos 8 Displays de 7 Segmentos:
+--   [ AN7   AN6   AN5 ]   .   [ AN4   AN3   AN2 ]   .   [ AN1   AN0 ]
+-- +---------------------+   +---------------------+   +---------------+
+-- |   7     7     7   . |   |   7     7     7   . |   |   5     0     |
+-- +---------------------+   +---------------------+   +---------------+
+--     1º TRIO (3 REELS)         2º TRIO (3 REELS)       ÚLTIMOS 2 (CRÉDITOS)
 ----------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -32,42 +33,37 @@ end top;
 architecture Behavioral of top is
 
     -- Sinais de botões debounced e pulsos de borda
-    signal btnc_db       : STD_LOGIC;
-    signal btnu_db       : STD_LOGIC;
-    signal btnc_prev     : STD_LOGIC := '0';
-    signal btn_spin_pulse: STD_LOGIC := '0';
+    signal btnc_db        : STD_LOGIC;
+    signal btnu_db        : STD_LOGIC;
+    signal btnc_prev      : STD_LOGIC := '0';
+    signal btn_spin_pulse : STD_LOGIC := '0';
 
-    -- Sinais do LFSR (PRNG)
-    signal rand_100      : integer range 0 to 99;
-    signal rand_byte     : STD_LOGIC_VECTOR(7 downto 0);
-    signal rand_reel1    : unsigned(3 downto 0);
-    signal rand_reel2    : unsigned(3 downto 0);
-    signal rand_reel3    : unsigned(3 downto 0);
-    signal rand_reel4    : unsigned(3 downto 0);
+    -- Sinais do LFSR (PRNG) de 16-bit
+    signal rand_val       : unsigned(7 downto 0);
+    signal rand_reel1     : unsigned(3 downto 0);
+    signal rand_reel2     : unsigned(3 downto 0);
+    signal rand_reel3     : unsigned(3 downto 0);
+    signal rand_reel4     : unsigned(3 downto 0);
+    signal rand_reel5     : unsigned(3 downto 0);
+    signal rand_reel6     : unsigned(3 downto 0);
 
-    -- Sinais do Controlador de Limiar Adaptativo
-    signal threshold_val : integer range 0 to 99;
-    signal threshold_vec : STD_LOGIC_VECTOR(7 downto 0);
-    signal spins_count   : integer range 0 to 99;
-    signal wins_count    : integer range 0 to 99;
-
-    -- Sinais da FSM da Slot Machine
-    signal disp_reel1    : unsigned(3 downto 0);
-    signal disp_reel2    : unsigned(3 downto 0);
-    signal disp_reel3    : unsigned(3 downto 0);
-    signal disp_reel4    : unsigned(3 downto 0);
-    signal credits_val   : integer range 0 to 99;
-    signal led_win_s     : STD_LOGIC;
-    signal spin_active_s : STD_LOGIC;
-    signal payout_act_s  : STD_LOGIC;
-    signal update_tick_s : STD_LOGIC;
-    signal last_win_s    : STD_LOGIC;
-    signal led_effects_s : STD_LOGIC_VECTOR(6 downto 0);
-    signal fsm_code_s    : STD_LOGIC_VECTOR(2 downto 0);
+    -- Sinais da FSM da Slot Machine (6 Carretéis)
+    signal disp_reel1     : unsigned(3 downto 0);
+    signal disp_reel2     : unsigned(3 downto 0);
+    signal disp_reel3     : unsigned(3 downto 0);
+    signal disp_reel4     : unsigned(3 downto 0);
+    signal disp_reel5     : unsigned(3 downto 0);
+    signal disp_reel6     : unsigned(3 downto 0);
+    signal credits_val    : integer range 0 to 99;
+    signal led_win_s      : STD_LOGIC;
+    signal spin_active_s  : STD_LOGIC;
+    signal payout_act_s   : STD_LOGIC;
+    signal led_effects_s  : STD_LOGIC_VECTOR(6 downto 0);
+    signal fsm_code_s     : STD_LOGIC_VECTOR(2 downto 0);
 
     -- Sinais para o Multiplexador dos 8 Displays
-    signal digits_bus    : STD_LOGIC_VECTOR(31 downto 0);
-    signal dp_bus        : STD_LOGIC_VECTOR(7 downto 0);
+    signal digits_bus     : STD_LOGIC_VECTOR(31 downto 0);
+    signal dp_bus         : STD_LOGIC_VECTOR(7 downto 0);
 
     function get_debounce_const return integer is
     begin
@@ -124,88 +120,70 @@ begin
             clk        => clk,
             reset      => btnu_db,
             enable     => '1',
-            rand_100   => rand_100,
-            rand_byte  => rand_byte,
+            rand_val   => rand_val,
             rand_reel1 => rand_reel1,
             rand_reel2 => rand_reel2,
             rand_reel3 => rand_reel3,
-            rand_reel4 => rand_reel4
+            rand_reel4 => rand_reel4,
+            rand_reel5 => rand_reel5,
+            rand_reel6 => rand_reel6
         );
 
     ----------------------------------------------------------------------------
-    -- 3. Controlador Dinâmico do Limiar (Artigo IEEE 2025)
-    ----------------------------------------------------------------------------
-    u_threshold_ctrl: entity work.adaptive_threshold_ctrl
-        generic map (
-            DEFAULT_THRESH => 50,
-            MIN_THRESH     => 15,
-            MAX_THRESH     => 95,
-            STEP           => 7
-        )
-        port map (
-            clk           => clk,
-            reset         => btnu_db,
-            update_tick   => update_tick_s,
-            is_win        => last_win_s,
-            load_sw       => sw(15),           -- SW15: Carga manual
-            sw_threshold  => sw(7 downto 0),   -- SW7..0: Limiar manual
-            threshold_val => threshold_val,
-            threshold_vec => threshold_vec,
-            spins_count   => spins_count,
-            wins_count    => wins_count
-        );
-
-    ----------------------------------------------------------------------------
-    -- 4. FSM da Slot Machine (4 Carretéis Sequenciais e Celebração)
+    -- 3. FSM da Slot Machine (6 Carretéis: 3 + 3 e Paragem Sequencial)
     ----------------------------------------------------------------------------
     u_fsm: entity work.slot_machine_fsm
         generic map (
             SIM_SPEEDUP => SIM_SPEEDUP
         )
         port map (
-            clk                   => clk,
-            reset                 => btnu_db,
-            btn_spin_pulse        => btn_spin_pulse,
-            current_threshold     => threshold_val,
-            rand_100              => rand_100,
-            rand_reel1            => rand_reel1,
-            rand_reel2            => rand_reel2,
-            rand_reel3            => rand_reel3,
-            rand_reel4            => rand_reel4,
-            disp_reel1            => disp_reel1,
-            disp_reel2            => disp_reel2,
-            disp_reel3            => disp_reel3,
-            disp_reel4            => disp_reel4,
-            credits_out           => credits_val,
-            led_win               => led_win_s,
-            spin_active           => spin_active_s,
-            payout_active         => payout_act_s,
-            update_threshold_tick => update_tick_s,
-            last_was_win          => last_win_s,
-            led_effects           => led_effects_s,
-            fsm_state_code        => fsm_code_s
+            clk            => clk,
+            reset          => btnu_db,
+            btn_spin_pulse => btn_spin_pulse,
+            rand_val       => rand_val,
+            rand_reel1     => rand_reel1,
+            rand_reel2     => rand_reel2,
+            rand_reel3     => rand_reel3,
+            rand_reel4     => rand_reel4,
+            rand_reel5     => rand_reel5,
+            rand_reel6     => rand_reel6,
+            disp_reel1     => disp_reel1,
+            disp_reel2     => disp_reel2,
+            disp_reel3     => disp_reel3,
+            disp_reel4     => disp_reel4,
+            disp_reel5     => disp_reel5,
+            disp_reel6     => disp_reel6,
+            credits_out    => credits_val,
+            led_win        => led_win_s,
+            spin_active    => spin_active_s,
+            payout_active  => payout_act_s,
+            led_effects    => led_effects_s,
+            fsm_state_code => fsm_code_s
         );
 
     ----------------------------------------------------------------------------
-    -- 5. Disposição nos 8 Displays de 7 Segmentos (Fiel à Altera DE2)
+    -- 4. Disposição nos 8 Displays: 3 Carretéis + 3 Carretéis + 2 Créditos
     --
-    --   [AN7 AN6]         : CRÉDITOS DO JOGADOR (ex: 50, 49)
-    --   [AN5 AN4]         : LIMIAR DINÂMICO IA  (ex: 50, 92)
-    --   [AN3 AN2 AN1 AN0] : OS 4 CARRETÉIS (Reel 4, Reel 3, Reel 2, Reel 1)
+    --   [AN7 AN6 AN5] : 1º Trio de Carretéis (Reel 1, Reel 2, Reel 3)
+    --   [AN4 AN3 AN2] : 2º Trio de Carretéis (Reel 4, Reel 5, Reel 6)
+    --   [AN1 AN0]     : Os Últimos 2 Dígitos para Créditos (Dezenas, Unidades)
     ----------------------------------------------------------------------------
-    digits_bus(31 downto 28) <= get_bcd(credits_val, true);     -- AN7: Dezena dos Créditos
-    digits_bus(27 downto 24) <= get_bcd(credits_val, false);    -- AN6: Unidade dos Créditos
-    digits_bus(23 downto 20) <= get_bcd(threshold_val, true);   -- AN5: Dezena do Limiar
-    digits_bus(19 downto 16) <= get_bcd(threshold_val, false);  -- AN4: Unidade do Limiar
-    digits_bus(15 downto 12) <= std_logic_vector(disp_reel4);   -- AN3: Carretel 4
-    digits_bus(11 downto 8)  <= std_logic_vector(disp_reel3);   -- AN2: Carretel 3
-    digits_bus(7 downto 4)   <= std_logic_vector(disp_reel2);   -- AN1: Carretel 2
-    digits_bus(3 downto 0)   <= std_logic_vector(disp_reel1);   -- AN0: Carretel 1
+    digits_bus(31 downto 28) <= std_logic_vector(disp_reel1);   -- AN7: Carretel 1
+    digits_bus(27 downto 24) <= std_logic_vector(disp_reel2);   -- AN6: Carretel 2
+    digits_bus(23 downto 20) <= std_logic_vector(disp_reel3);   -- AN5: Carretel 3
 
-    -- Pontos decimais delimitadores entre os blocos (Créditos . Limiar . Carretéis):
-    dp_bus <= "10101111";
+    digits_bus(19 downto 16) <= std_logic_vector(disp_reel4);   -- AN4: Carretel 4
+    digits_bus(15 downto 12) <= std_logic_vector(disp_reel5);   -- AN3: Carretel 5
+    digits_bus(11 downto 8)  <= std_logic_vector(disp_reel6);   -- AN2: Carretel 6
 
-    -- Controlador de varrimento dos 8 displays
+    digits_bus(7 downto 4)   <= get_bcd(credits_val, true);     -- AN1: Dezena dos Créditos
+    digits_bus(3 downto 0)   <= get_bcd(credits_val, false);    -- AN0: Unidade dos Créditos
+
+    -- Pontos decimais delimitadores entre os trios e os créditos:
+    -- Ponto após AN5 e após AN2: "777. 777. 50"
+    dp_bus <= "11011011";
+
+    -- Controlador de varrimento para os 8 displays da placa
     u_disp_mux: entity work.disp_mux
         port map (
             clk    => clk,
@@ -217,12 +195,12 @@ begin
         );
 
     ----------------------------------------------------------------------------
-    -- 6. Mapeamento dos 16 LEDs da Nexys-4 DDR
+    -- 5. Mapeamento dos 16 LEDs da Nexys-4 DDR
     ----------------------------------------------------------------------------
-    -- LEDs 7..0: Limiar atual em binário (leds_threshold conforme artigo)
-    led(7 downto 0) <= threshold_vec;
+    -- LEDs 7..0: Representação binária dos créditos atuais
+    led(7 downto 0) <= std_logic_vector(to_unsigned(credits_val, 8));
 
-    -- LEDs 14..8: Efeitos visuais dinâmicos (Chaser em rotação / Festa no Jackpot)
+    -- LEDs 14..8: Animações visuais (Chaser em rotação / Festa no Jackpot)
     led(14 downto 8) <= led_effects_s when (spin_active_s = '1' or payout_act_s = '1')
                         else ("0000" & fsm_code_s);
 

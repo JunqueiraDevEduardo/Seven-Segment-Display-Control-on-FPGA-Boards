@@ -120,8 +120,7 @@ begin
                integer'image(to_integer(unsigned(led(7 downto 0)))) severity note;
         report "================ FIM DA SIMULACAO COM SUCESSO ========" severity note;
 
-        wait for 1 us;
-        std.env.stop;
+        wait; -- Fim da simulacao (compativel com VHDL-1993/2008)
     end process;
 
 end sim;
